@@ -39,9 +39,6 @@ void ADC_Update()
     while (ADCSRA & (1 << ADSC))
         ; // wait till conversion complete
 }
-void analogeSet(uint8_t timer, uint8_t value){
-    timer = 255 - value;
-}
 void ADC_Set_Input(uint8_t channel)
 {
     ADMUX = (0xf0 & ADMUX) | channel;

@@ -9,7 +9,7 @@
 ---
 ##### Microprocessor:
  
- Atmel ATtiny85
+ [Atmel ATtiny85](https://www.microchip.com/en-us/product/ATTINY85)
  
 ##### Sensors:
  

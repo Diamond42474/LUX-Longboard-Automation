@@ -1,4 +1,18 @@
 #include <avr/io.h>
+#include "settings.h"
+#include "pin_defines.h"
+// Values for
+int8_t adcAverageList[ADC_AVERAGE_SIZE];
+uint16_t index = 0;
+uint16_t averageSkip = 0;
+int8_t adcAverage = 0;
+uint8_t lastValue = 0;
+
+void lightsSetup(){
+    PWM_Config();
+    ADC_Config();
+    averageADC_Config();
+}
 void PWM_Config()
 {
     TCCR0A = 0x00; //Normal mode
@@ -48,4 +62,66 @@ uint8_t getADC(uint8_t pin)
     ADMUX = (0xf0 & ADMUX) | pin;
     ADC_Update();
     return ADCH;
+}
+/**
+ * @brief Populates the average array with 0s
+ * 
+ */
+void averageADC_Config(){
+    for (uint32_t i = 0; i < ADC_AVERAGE_SIZE; i++)
+    {
+        adcAverageList[i] = 0;
+    }
+}
+/**
+ * @brief Updates the average value from the adc 
+ * 
+ * 
+ */
+void updateAverageADC()
+{
+    if (averageSkip >= TICKS_BETWEEN_ADC_UPDATES)
+    {
+        averageSkip = 0;
+        if (index >= ADC_AVERAGE_SIZE)
+        {
+            index = 0;
+        }
+        else
+        {
+            // Add new index
+                uint8_t current = getADC(MOTOR_INPUT);
+                adcAverageList[index] = (lastValue - current) * ACD_DIFFERENCE_AMPLIFIER;
+                lastValue = current;
+
+            // Calculate average
+            int32_t total = 0;
+            for (uint16_t i = 0; i < ADC_AVERAGE_SIZE; i++)
+            {
+                total += adcAverageList[i];
+            }
+            adcAverage = (total / ADC_AVERAGE_SIZE);
+            index++;
+        }
+    }
+    else
+    {
+        averageSkip++;
+    }
+}
+/**
+ * @brief Get the Average of ADC
+ * 
+ * @return uint8_t Averaged value 
+ */
+int8_t getAverageADC()
+{
+    updateAverageADC();
+    adcAverage *= ACD_AVERAGE_AMPLIFIER;
+    if(adcAverage > 255){
+        return 255;
+    }else if(adcAverage < -255){
+        return -255;
+    }
+    return adcAverage;
 }

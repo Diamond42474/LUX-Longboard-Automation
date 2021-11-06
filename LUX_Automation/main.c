@@ -3,76 +3,48 @@
 #include <avr/power.h>
 #include "light_automation.h"
 #include "pin_defines.h"
-
-#define AVERAGESKIP 255
-uint8_t adcAverageList[255];
-uint8_t index = 0;
-uint8_t averageSkip = 0;
-uint8_t adcAverage = 0;
+#include "settings.h"
 void setup()
 {
-    //Clock
+    // Clock
     clock_prescale_set(clock_div_1); //8MHz
-    //PWM
+    // PWM
     PWM_Config();
-    //Pins
-    DDRB = (1 << BLUE_LED) | (1 << RED_LED); //Set blue and red pins as output
-    //ADC
-    ADC_Config();
-    //Setup adcAveraging
-    for (uint8_t i = 0; i < 255; i++)
-    {
-        adcAverageList[i] = 0;
-    }
+    // Pins
+    DDRB = (1 << BLUE_PIN) | (1 << RED_PIN); //Set blue and red pins as output
+    // Lights
+    lightsSetup();
 }
 void startupSequence()
 {
-    for (uint8_t ie = 0; ie < 5; ie++)
+    for (uint8_t ie = 0; ie < 1; ie++)
     {
         for (uint8_t i = 255; i > 0; i--)
         {
-            RED_TIMER = i;
-            BLUE_TIMER = i;
+            RED_LED = i;
+            BLUE_LED = i;
             _delay_ms(4);
         }
-    }
-}
-void updateLights()
-{
-    if (averageSkip >= AVERAGESKIP)
-    {
-        averageSkip = 0;
-        if (index >= 255)
-        {
-            index = 0;
-        }
-        else
-        {
-            adcAverageList[index] = 255 - getADC(X_Axis);
-            uint16_t total = 0;
-            for (uint8_t i = 0; i < 255; i++)
-            {
-                total += adcAverageList[i];
-            }
-            adcAverage = total / 255;
-            index++;
-        }
-    }else{
-        //_delay_us(500);
-        averageSkip++;
     }
 }
 int main(void)
 {
     setup();
-    //startupSequence();
+    startupSequence();
     while (1)
     {
-        // Update Blue and Red LEDs
-        //RED_TIMER = 255 - getADC(X_Axis);
-        // BLUE_TIMER = 255 - getADC(Y_Axis);
-        updateLights();
-        RED_TIMER = adcAverage;
+        int8_t average = getAverageADC();
+
+        if(average>=0){
+            // When board is accellerating
+            BLUE_LED = 255 - ((uint8_t)(average));
+            RED_LED = 255;
+        }else{
+            // When board is breaking
+            RED_LED = 255 - ((uint8_t)abs(average));
+            BLUE_LED = 255;
+        }
+        //RED_LED = 255 - getADC(MOTOR_INPUT);
     }
     return 1;
 }

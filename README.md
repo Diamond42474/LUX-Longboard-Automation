@@ -22,3 +22,6 @@
 ##### Circuit Components:
  
  >> Will be added when circuit is built
+
+##### Diagram:
+![diagram](https://github.com/Diamond42474/LUX-Longboard-Automation/blob/main/Diagrams/Circuit%20Diagram.png)

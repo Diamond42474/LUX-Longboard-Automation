@@ -13,3 +13,4 @@
 #define ACD_AVERAGE_AMPLIFIER 1
 // Size of averaging array (smaller will let each value have greater effect)
 #define ADC_AVERAGE_SIZE 32
+#define ADC_AVERAGE_AXES 2

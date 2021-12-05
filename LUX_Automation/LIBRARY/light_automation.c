@@ -2,13 +2,13 @@
 #include "settings.h"
 #include "pin_defines.h"
 // Values for
-int8_t adcAverageList[ADC_AVERAGE_SIZE];
+uint8_t adcAverageList[ADC_AVERAGE_AXES][ADC_AVERAGE_SIZE];
 uint16_t index = 0;
 uint16_t averageSkip = 0;
-int8_t adcAverage = 0;
-uint8_t lastValue = 0;
+uint8_t adcAverage[ADC_AVERAGE_AXES] = {0, 0};
 
-void lightsSetup(){
+void lightsSetup()
+{
     PWM_Config();
     ADC_Config();
     averageADC_Config();
@@ -67,10 +67,14 @@ uint8_t getADC(uint8_t pin)
  * @brief Populates the average array with 0s
  * 
  */
-void averageADC_Config(){
-    for (uint32_t i = 0; i < ADC_AVERAGE_SIZE; i++)
+void averageADC_Config()
+{
+    for (uint8_t i = 0; i < ADC_AVERAGE_AXES; i++)
     {
-        adcAverageList[i] = 0;
+        for (uint32_t ie = 0; ie < ADC_AVERAGE_SIZE; ie++)
+        {
+            adcAverageList[i][ie] = 0;
+        }
     }
 }
 /**
@@ -90,17 +94,22 @@ void updateAverageADC()
         else
         {
             // Add new index
-                uint8_t current = getADC(MOTOR_INPUT);
-                adcAverageList[index] = (lastValue - current) * ACD_DIFFERENCE_AMPLIFIER;
-                lastValue = current;
+            uint8_t Y = getADC(Y_Axis);
+            uint8_t X = getADC(X_Axis);
+
+            adcAverageList[0][index] = X;
+            adcAverageList[1][index] = Y;
 
             // Calculate average
-            int32_t total = 0;
-            for (uint16_t i = 0; i < ADC_AVERAGE_SIZE; i++)
+            for (uint8_t i = 0; i < ADC_AVERAGE_AXES; i++)
             {
-                total += adcAverageList[i];
+                int32_t total = 0;
+                for (uint16_t ie = 0; ie < ADC_AVERAGE_SIZE; ie++)
+                {
+                    total += adcAverageList[i][ie];
+                }
+                adcAverage[i] = (total / ADC_AVERAGE_SIZE);
             }
-            adcAverage = (total / ADC_AVERAGE_SIZE);
             index++;
         }
     }
@@ -114,14 +123,10 @@ void updateAverageADC()
  * 
  * @return uint8_t Averaged value 
  */
-int8_t getAverageADC()
+uint8_t * getAverageADC()
 {
     updateAverageADC();
-    adcAverage *= ACD_AVERAGE_AMPLIFIER;
-    if(adcAverage > 255){
-        return 255;
-    }else if(adcAverage < -255){
-        return -255;
-    }
+    adcAverage[0] *= ACD_AVERAGE_AMPLIFIER;
+    adcAverage[1] *= ACD_AVERAGE_AMPLIFIER;
     return adcAverage;
 }

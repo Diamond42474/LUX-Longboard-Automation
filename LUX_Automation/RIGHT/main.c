@@ -50,11 +50,11 @@ int main(void)
         BLUE_LED = 255 - Y;
 
         if(Y<128){
-            RED_LED = 0; // full brightness
-            BLUE_LED = 255 - Y * 2;
-        }else{
             BLUE_LED = 0;
-            RED_LED = Y * 2;
+            RED_LED = 255 - Y * 2;
+        }else{
+            RED_LED = 0;
+            BLUE_LED = (Y - 128) * 2;
         }
         /*
         if (X < 128)
